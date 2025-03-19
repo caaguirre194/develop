@@ -5,14 +5,11 @@ import lombok.Data;
 
 import java.util.UUID;
 
-@Data
 @Builder
-public class User {
-
+@Data
+public class Property {
     private UUID id;
-    private int identification;
-    private String name;
-    private String lastname;
-    private int age;
-
+    private String address;
+    private int stratum;
+    private int identificationOwner;
 }

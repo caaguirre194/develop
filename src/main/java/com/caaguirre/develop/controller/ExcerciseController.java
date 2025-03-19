@@ -1,11 +1,10 @@
 package com.caaguirre.develop.controller;
 
 import com.caaguirre.develop.models.IntegersRequest;
+import com.caaguirre.develop.models.Property;
 import com.caaguirre.develop.models.User;
 import com.caaguirre.develop.models.ExcerciseSumRequest;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
@@ -22,9 +21,13 @@ import java.util.stream.Collectors;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-
 import static com.caaguirre.develop.common.Constant.*;
 
+
+/**
+ * @author Carlos Andrés Aguirre
+ */
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @Tag(name = "excercises", description = "Agrupación de los ejercicios.")
 @RequestMapping("api/v1/excercises")
@@ -57,7 +60,9 @@ public class ExcerciseController {
             @ApiResponse(responseCode = "400", description = "Error en los parametros porporcionados"),
             @ApiResponse(responseCode = "500", description = "Error del Servidor")
     })
-    ResponseEntity<List<User>> filterExcercise(@RequestParam Optional<Integer> age, @RequestParam Optional<String> name) {
+    ResponseEntity<List<User>> users(@RequestParam Optional<Integer> id,
+                                     @RequestParam Optional<Integer> age,
+                                     @RequestParam Optional<String> name) {
 
         // Combine filters into one predicate
         Predicate<User> combinedPredicate = user -> true; // Default predicate that accepts all users
@@ -72,7 +77,37 @@ public class ExcerciseController {
             combinedPredicate = combinedPredicate.and(isOlderThan(age.get()));
         }
 
+        // Apply the id filter if present
+        if (id.isPresent()) {
+            combinedPredicate = combinedPredicate.and(hasTheIdentification(id.get()));
+        }
+
         return ResponseEntity.ok(USERS.stream()
+                .filter(combinedPredicate)
+                .peek(System.out::println)
+                .collect(Collectors.toList()));
+
+    }
+
+    @GetMapping(value = "/properties", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(description = "Servicio que consulta los propiedades de un usuario.",
+            summary = "Consultar propiedades.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Operación exitosa"),
+            @ApiResponse(responseCode = "400", description = "Error en los parametros porporcionados"),
+            @ApiResponse(responseCode = "500", description = "Error del Servidor")
+    })
+    ResponseEntity<List<Property>> properties(@RequestParam Optional<Integer> owner) {
+
+        // Combine filters into one predicate
+        Predicate<Property> combinedPredicate = property -> true; // Default predicate that accepts all users
+
+        // Apply the name filter if present
+        if (owner.isPresent()) {
+            combinedPredicate = combinedPredicate.and(hasTheOwner(owner.get()));
+        }
+
+        return ResponseEntity.ok(PROPERTIES.stream()
                 .filter(combinedPredicate)
                 .peek(System.out::println)
                 .collect(Collectors.toList()));
