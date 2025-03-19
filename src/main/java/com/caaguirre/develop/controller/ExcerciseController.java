@@ -16,7 +16,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 
@@ -95,12 +94,10 @@ public class ExcerciseController {
         Date resultDate = new Date(System.currentTimeMillis());
         log.info("WebFlux inicio -> " + sdf.format(resultDate));
 
-        Mono<UserPropertyDTO> propiedadesUsuario$ = Mono.zip(excerciseService.users(owner, Optional.empty(),
+        return Mono.zip(excerciseService.users(owner, Optional.empty(),
                         Optional.empty()), excerciseService.properties(owner))
                 .map(tuple -> new UserPropertyDTO(tuple.getT1(), tuple.getT2()))
                 .doOnSuccess(i -> log.info("WebFlux fin -> " + sdf.format(new Date(System.currentTimeMillis()))));
-
-        return propiedadesUsuario$;
     }
 
     @PostMapping("/enteros")
