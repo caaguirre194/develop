@@ -65,7 +65,7 @@ public class ExcerciseController {
     })
     ResponseEntity<Mono<List<User>>> users(@RequestParam Optional<Integer> id,
                                            @RequestParam Optional<Integer> age,
-                                           @RequestParam Optional<String> name) {
+                                           @RequestParam Optional<String> name) throws InterruptedException {
 
         return ResponseEntity.ok(excerciseService.users(id, age, name));
     }
@@ -78,7 +78,7 @@ public class ExcerciseController {
             @ApiResponse(responseCode = "400", description = "Error en los parametros porporcionados"),
             @ApiResponse(responseCode = "500", description = "Error del Servidor")
     })
-    ResponseEntity<Mono<List<Property>>> properties(@RequestParam Optional<Integer> owner) {
+    ResponseEntity<Mono<List<Property>>> properties(@RequestParam Optional<Integer> owner) throws InterruptedException {
         return ResponseEntity.ok(excerciseService.properties(owner));
     }
 
@@ -93,14 +93,13 @@ public class ExcerciseController {
     public Mono<UserPropertyDTO> obtenerTodasPropiedadesPorUsuario(@RequestParam Optional<Integer> owner) throws Exception {
         SimpleDateFormat sdf = new SimpleDateFormat("MMM dd,yyyy HH:mm:ss");
         Date resultDate = new Date(System.currentTimeMillis());
-        log.info("WebFlux -> " + sdf.format(resultDate));
-
+        log.info("WebFlux inicio -> " + sdf.format(resultDate));
 
         Mono<UserPropertyDTO> propiedadesUsuario$ = Mono.zip(excerciseService.users(owner, Optional.empty(),
                 Optional.empty()), excerciseService.properties(owner))
                         .map(tuple -> new UserPropertyDTO(tuple.getT1(), tuple.getT2()));
 
-        propiedadesUsuario$.subscribe(i -> log.info(i.getClass() + "-> " + sdf.format(new Date(System.currentTimeMillis()))));
+        propiedadesUsuario$.subscribe(i -> log.info("WebFlux fin -> " + sdf.format(new Date(System.currentTimeMillis()))));
 
         return propiedadesUsuario$;
     }

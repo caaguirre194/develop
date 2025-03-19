@@ -9,8 +9,8 @@ import java.util.Optional;
 
 public interface ExcerciseService {
 
-    Mono<List<Property>> properties(Optional<Integer> owner);
+    Mono<List<Property>> properties(Optional<Integer> owner) throws InterruptedException;
 
-    Mono<List<User>> users(Optional<Integer> id, Optional<Integer> age, Optional<String> name);
+    Mono<List<User>> users(Optional<Integer> id, Optional<Integer> age, Optional<String> name) throws InterruptedException;
 
 }
