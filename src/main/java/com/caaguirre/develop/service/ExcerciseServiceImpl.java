@@ -3,7 +3,6 @@ package com.caaguirre.develop.service;
 import com.caaguirre.develop.models.Property;
 import com.caaguirre.develop.models.User;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 

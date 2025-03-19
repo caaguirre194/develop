@@ -1,9 +1,6 @@
 package com.caaguirre.develop.controller;
 
-import com.caaguirre.develop.models.IntegersRequest;
-import com.caaguirre.develop.models.Property;
-import com.caaguirre.develop.models.User;
-import com.caaguirre.develop.models.ExcerciseSumRequest;
+import com.caaguirre.develop.models.*;
 import com.caaguirre.develop.service.ExcerciseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -67,8 +64,8 @@ public class ExcerciseController {
             @ApiResponse(responseCode = "500", description = "Error del Servidor")
     })
     ResponseEntity<Mono<List<User>>> users(@RequestParam Optional<Integer> id,
-                                     @RequestParam Optional<Integer> age,
-                                     @RequestParam Optional<String> name) {
+                                           @RequestParam Optional<Integer> age,
+                                           @RequestParam Optional<String> name) {
 
         return ResponseEntity.ok(excerciseService.users(id, age, name));
     }
@@ -93,16 +90,17 @@ public class ExcerciseController {
             @ApiResponse(responseCode = "400", description = "Error en los parametros porporcionados"),
             @ApiResponse(responseCode = "500", description = "Error del Servidor")
     })
-    public Flux<Object> obtenerTodasPropiedadesPorUsuario(@RequestParam Optional<Integer> owner) throws Exception {
+    public Mono<UserPropertyDTO> obtenerTodasPropiedadesPorUsuario(@RequestParam Optional<Integer> owner) throws Exception {
         SimpleDateFormat sdf = new SimpleDateFormat("MMM dd,yyyy HH:mm:ss");
         Date resultDate = new Date(System.currentTimeMillis());
         log.info("WebFlux -> " + sdf.format(resultDate));
 
 
-        Flux<Object> propiedadesUsuario$ = Flux.merge(excerciseService.users(owner, Optional.empty(), Optional.empty()), excerciseService.properties(owner));
-        propiedadesUsuario$.subscribe(i -> {
-            log.info(i.getClass() + "-> " + sdf.format(new Date(System.currentTimeMillis())));
-        });
+        Mono<UserPropertyDTO> propiedadesUsuario$ = Mono.zip(excerciseService.users(owner, Optional.empty(),
+                Optional.empty()), excerciseService.properties(owner))
+                        .map(tuple -> new UserPropertyDTO(tuple.getT1(), tuple.getT2()));
+
+        propiedadesUsuario$.subscribe(i -> log.info(i.getClass() + "-> " + sdf.format(new Date(System.currentTimeMillis()))));
 
         return propiedadesUsuario$;
     }
