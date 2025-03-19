@@ -4,24 +4,23 @@ import com.caaguirre.develop.models.IntegersRequest;
 import com.caaguirre.develop.models.Property;
 import com.caaguirre.develop.models.User;
 import com.caaguirre.develop.models.ExcerciseSumRequest;
+import com.caaguirre.develop.service.ExcerciseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Predicate;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-
-import static com.caaguirre.develop.common.Constant.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 
 /**
@@ -29,9 +28,16 @@ import static com.caaguirre.develop.common.Constant.*;
  */
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
+@Slf4j
 @Tag(name = "excercises", description = "Agrupación de los ejercicios.")
 @RequestMapping("api/v1/excercises")
 public class ExcerciseController {
+
+    private final ExcerciseService excerciseService;
+
+    public ExcerciseController(ExcerciseService excerciseService) {
+        this.excerciseService = excerciseService;
+    }
 
     @PostMapping("/1")
     int[] sumExcercise(@Valid @RequestBody ExcerciseSumRequest request) {
@@ -60,33 +66,11 @@ public class ExcerciseController {
             @ApiResponse(responseCode = "400", description = "Error en los parametros porporcionados"),
             @ApiResponse(responseCode = "500", description = "Error del Servidor")
     })
-    ResponseEntity<List<User>> users(@RequestParam Optional<Integer> id,
+    ResponseEntity<Mono<List<User>>> users(@RequestParam Optional<Integer> id,
                                      @RequestParam Optional<Integer> age,
                                      @RequestParam Optional<String> name) {
 
-        // Combine filters into one predicate
-        Predicate<User> combinedPredicate = user -> true; // Default predicate that accepts all users
-
-        // Apply the name filter if present
-        if (name.isPresent()) {
-            combinedPredicate = combinedPredicate.and(hasTheName(name.get()));
-        }
-
-        // Apply the age filter if present
-        if (age.isPresent()) {
-            combinedPredicate = combinedPredicate.and(isOlderThan(age.get()));
-        }
-
-        // Apply the id filter if present
-        if (id.isPresent()) {
-            combinedPredicate = combinedPredicate.and(hasTheIdentification(id.get()));
-        }
-
-        return ResponseEntity.ok(USERS.stream()
-                .filter(combinedPredicate)
-                .peek(System.out::println)
-                .collect(Collectors.toList()));
-
+        return ResponseEntity.ok(excerciseService.users(id, age, name));
     }
 
     @GetMapping(value = "/properties", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -97,21 +81,30 @@ public class ExcerciseController {
             @ApiResponse(responseCode = "400", description = "Error en los parametros porporcionados"),
             @ApiResponse(responseCode = "500", description = "Error del Servidor")
     })
-    ResponseEntity<List<Property>> properties(@RequestParam Optional<Integer> owner) {
+    ResponseEntity<Mono<List<Property>>> properties(@RequestParam Optional<Integer> owner) {
+        return ResponseEntity.ok(excerciseService.properties(owner));
+    }
 
-        // Combine filters into one predicate
-        Predicate<Property> combinedPredicate = property -> true; // Default predicate that accepts all users
+    @GetMapping(value = "/user/properties", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(description = "Servicio que consulta los propiedades de un usuario.",
+            summary = "Consultar propiedades.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Operación exitosa"),
+            @ApiResponse(responseCode = "400", description = "Error en los parametros porporcionados"),
+            @ApiResponse(responseCode = "500", description = "Error del Servidor")
+    })
+    public Flux<Object> obtenerTodasPropiedadesPorUsuario(@RequestParam Optional<Integer> owner) throws Exception {
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd,yyyy HH:mm:ss");
+        Date resultDate = new Date(System.currentTimeMillis());
+        log.info("WebFlux -> " + sdf.format(resultDate));
 
-        // Apply the name filter if present
-        if (owner.isPresent()) {
-            combinedPredicate = combinedPredicate.and(hasTheOwner(owner.get()));
-        }
 
-        return ResponseEntity.ok(PROPERTIES.stream()
-                .filter(combinedPredicate)
-                .peek(System.out::println)
-                .collect(Collectors.toList()));
+        Flux<Object> propiedadesUsuario$ = Flux.merge(excerciseService.users(owner, Optional.empty(), Optional.empty()), excerciseService.properties(owner));
+        propiedadesUsuario$.subscribe(i -> {
+            log.info(i.getClass() + "-> " + sdf.format(new Date(System.currentTimeMillis())));
+        });
 
+        return propiedadesUsuario$;
     }
 
     @PostMapping("/enteros")
