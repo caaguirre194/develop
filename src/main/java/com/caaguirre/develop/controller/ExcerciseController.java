@@ -3,6 +3,14 @@ package com.caaguirre.develop.controller;
 import com.caaguirre.develop.models.IntegersRequest;
 import com.caaguirre.develop.models.User;
 import com.caaguirre.develop.models.ExcerciseSumRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -12,14 +20,18 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+
 import static com.caaguirre.develop.common.Constant.*;
 
 @RestController
+@Tag(name = "excercises", description = "Agrupación de los ejercicios.")
 @RequestMapping("api/v1/excercises")
 public class ExcerciseController {
 
     @PostMapping("/1")
-    int[] sumExcercise(@RequestBody ExcerciseSumRequest request) {
+    int[] sumExcercise(@Valid @RequestBody ExcerciseSumRequest request) {
 
         Map<Integer, Integer> validations = new HashMap<>();
         for (int i = 0; i < request.getNums().length; i++) {
@@ -37,8 +49,15 @@ public class ExcerciseController {
 
     }
 
-    @GetMapping("/list")
-    List<User> filterExcercise(@RequestParam Optional<Integer> age, @RequestParam Optional<String> name) {
+    @GetMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(description = "Servicio que consulta los usuarios del sistema.",
+            summary = "Consultar usuarios.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Operación exitosa"),
+            @ApiResponse(responseCode = "400", description = "Error en los parametros porporcionados"),
+            @ApiResponse(responseCode = "500", description = "Error del Servidor")
+    })
+    ResponseEntity<List<User>> filterExcercise(@RequestParam Optional<Integer> age, @RequestParam Optional<String> name) {
 
         // Combine filters into one predicate
         Predicate<User> combinedPredicate = user -> true; // Default predicate that accepts all users
@@ -53,10 +72,10 @@ public class ExcerciseController {
             combinedPredicate = combinedPredicate.and(isOlderThan(age.get()));
         }
 
-        return USERS.stream()
+        return ResponseEntity.ok(USERS.stream()
                 .filter(combinedPredicate)
                 .peek(System.out::println)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
 
     }
 
@@ -64,7 +83,7 @@ public class ExcerciseController {
     List<Integer> filterWithOutCeros(@RequestBody IntegersRequest request) {
 
         return request.getList().stream()
-                .filter(num -> num!= 0)
+                .filter(num -> num != 0)
                 .collect(Collectors.toList());
     }
 

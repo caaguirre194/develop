@@ -4,6 +4,7 @@ import com.caaguirre.develop.models.User;
 
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -32,6 +33,7 @@ public class Constant {
         String lastname = LASTNAMES.get(random.nextInt(LASTNAMES.size()));
         int age = random.nextInt(100); // Random age between 0 and 99
         return User.builder()
+                .id(UUID.randomUUID())
                 .name(name)
                 .lastname(lastname)
                 .age(age)
